@@ -11,6 +11,11 @@ import scipy.stats
 
 
 def cossim(x, y):
+    #print('shape of x:', x.shape) (768,)
+    #print('shape of y:', y.shape) (3072,)
+    #print('np.dot(x,x):', np.dot(x, x))
+    #print('np.dot(y,y):', np.dot(y, y))
+    #print('np.dot(x,y):', np.dot(x, y))
     return np.dot(x, y) / math.sqrt(np.dot(x, x) * np.dot(y, y))
 
 
@@ -21,11 +26,18 @@ def construct_cossim_lookup(XY, AB):
     Returns an array of size (len(XY), len(AB)) containing cosine similarities
     between items in XY and items in AB.
     """
-
+    #print("len(XY) =", len(XY)) 37
+    #print("len(AB) =", len(AB)) 4
     cossims = np.zeros((len(XY), len(AB)))
+    #print("cossims before =", cossims)
     for xy in XY:
+        #print('xy:', xy)
         for ab in AB:
+            #print('ab:', ab)
+            #print('XY[xy]:', XY[xy])
+            #print('AB[ab]:', AB[ab])
             cossims[xy, ab] = cossim(XY[xy], AB[ab])
+    #print("cossims after =", cossims)
     return cossims
 
 
@@ -42,14 +54,12 @@ def s_XAB(X, s_wAB_memo):
     Given indices of target concept X and precomputed s_wAB values,
     return slightly more computationally efficient version of WEAT
     statistic for p-value computation.
-
     Caliskan defines the WEAT statistic s(X, Y, A, B) as
         sum_{x in X} s(x, A, B) - sum_{y in Y} s(y, A, B)
     where s(w, A, B) is defined as
         mean_{a in A} cos(w, a) - mean_{b in B} cos(w, b).
     The p-value is computed using a permutation test on (X, Y) over all
     partitions (X', Y') of X union Y with |X'| = |Y'|.
-
     However, for all partitions (X', Y') of X union Y,
         s(X', Y', A, B)
       = sum_{x in X'} s(x, A, B) + sum_{y in Y'} s(y, A, B)
@@ -58,7 +68,6 @@ def s_XAB(X, s_wAB_memo):
         sum_{x in X'} s(x, A, B) + sum_{y in Y'} s(y, A, B)
       = sum_{x in X'} s(x, A, B) + (C - sum_{x in X'} s(x, A, B))
       = C + 2 sum_{x in X'} s(x, A, B).
-
     By monotonicity,
         s(X', Y', A, B) > s(X, Y, A, B)
     if and only if
@@ -211,15 +220,25 @@ def run_test(encs, n_samples, parametric=False):
     '''
     X, Y = encs["targ1"]["encs"], encs["targ2"]["encs"]
     A, B = encs["attr1"]["encs"], encs["attr2"]["encs"]
+    #print("X=", encs["targ1"]["encs"])
+    #print("Y=", encs["targ2"]["encs"])
+    #print("A =", encs["attr1"]["encs"])
+    #print("B =", encs["attr2"]["encs"])
 
     # First convert all keys to ints to facilitate array lookups
     (X, Y) = convert_keys_to_ints(X, Y)
     (A, B) = convert_keys_to_ints(A, B)
+    #print("(X, Y) keys converted to int", (X, Y))
+    #print("(A, B) keys converted to int", (A, B))
 
     XY = X.copy()
+    #print("XY =", XY)
     XY.update(Y)
+    #print("updated XY =", XY)
     AB = A.copy()
+    #print('AB =', AB)
     AB.update(B)
+    #print('updated AB =', AB)
 
     log.info("Computing cosine similarities...")
     cossims = construct_cossim_lookup(XY, AB)
