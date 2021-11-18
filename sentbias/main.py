@@ -19,11 +19,9 @@ from data import (
     load_json, load_encodings, save_encodings, load_jiant_encodings,
 )
 import weat
-import encoders.bow as bow
-import encoders.infersent as infersent
-import encoders.gensen as gensen
-import encoders.elmo as elmo
-import encoders.bert as bert
+import encoders.kobert as kobert
+import encoders.kcelectra as kcelectra
+import encoders.korbert as korbert
 
 
 class ModelName(Enum):
@@ -33,13 +31,19 @@ class ModelName(Enum):
     BOW = 'bow'
     GUSE = 'guse'
     BERT = 'bert'
+    KOBERT = 'kobert'
+    KCELECTRA = 'kcelectra'
+    KORBERT = 'korbert'
     COVE = 'cove'
     OPENAI = 'openai'
 
 TEST_EXT = '.jsonl'
 MODEL_NAMES = [m.value for m in ModelName]
 GENSEN_VERSIONS = ["nli_large_bothskip", "nli_large_bothskip_parse", "nli_large_bothskip_2layer", "nli_large"]
-BERT_VERSIONS = ["bert-base-uncased", "bert-large-uncased", "bert-base-cased", "bert-large-cased"]
+#BERT_VERSIONS = ["bert-base-uncased", "bert-large-uncased", "bert-base-cased", "bert-large-cased", 'monologg/kobert']
+BERT_VERSIONS = ['monologg/kobert']
+ELECTRA_VERSIONS = ['beomi/KcELECTRA-base']
+KORBERT_VERSIONS = ['003_bert_eojeol_pytorch'] # the folder has to be in /sentbias (same folder as main.py) 
 
 
 def test_sort_key(test):
@@ -131,6 +135,20 @@ def handle_arguments(arguments):
     bert_group = parser.add_argument_group(ModelName.BERT.value, 'Options for BERT model')
     bert_group.add_argument('--bert_version', type=str, choices=BERT_VERSIONS,
                             help="Version of BERT to use.", default="bert-large-cased")
+    
+
+    kobert_group = parser.add_argument_group(ModelName.KOBERT.value, 'Options for KOBERT model')
+    kobert_group.add_argument('--kobert_version', type=str, choices=BERT_VERSIONS,
+                            help="Version of KOBERT to use.", default="monologg/kobert")
+    
+    kcelectra_group = parser.add_argument_group(ModelName.KCELECTRA.value, 'Options for KCELECTRA model')
+    kcelectra_group.add_argument('--kcelectra_version', type=str, choices=ELECTRA_VERSIONS,
+                            help="Version of KCELECTRA to use.", default="beomi/KcELECTRA-base")
+   
+    korbert_group = parser.add_argument_group(ModelName.KORBERT.value, 'Options for KORBERT model')
+    korbert_group.add_argument('--korbert_version', type=str, choices=KORBERT_VERSIONS,
+                            help="Version of KORBERT to use.", default='003_bert_eojeol_pytorch')
+   
 
     return parser.parse_args(arguments)
 
@@ -229,6 +247,14 @@ def main(arguments):
                 args.time_combine_method, args.layer_combine_method)
         elif model_name == ModelName.BERT.value:
             model_options = 'version=' + args.bert_version
+            # this below six lines are the added part
+        elif model_name == ModelName.KOBERT.value:
+            model_options = 'version=' + args.kobert_version
+        elif model_name == ModelName.KCELECTRA.value:
+            model_options = 'version=' + args.kcelectra_version
+        elif model_name == ModelName.KORBERT.value:
+            model_options = 'version=' + args.korbert_version
+
         elif model_name == ModelName.OPENAI.value:
             if args.openai_encs is None:
                 raise Exception('openai_encs must be specified for {} model'.format(model_name))
@@ -243,6 +269,7 @@ def main(arguments):
             enc_file = os.path.join(args.exp_dir, "%s.%s.h5" % (
                 "%s;%s" % (model_name, model_options) if model_options else model_name,
                 test))
+        
             if not args.ignore_cached_encs and os.path.isfile(enc_file):
                 log.info("Loading encodings from %s", enc_file)
                 encs = load_encodings(enc_file)
@@ -349,6 +376,27 @@ def main(arguments):
                     encs_targ2 = bert.encode(model, tokenizer, encs["targ2"]["examples"])
                     encs_attr1 = bert.encode(model, tokenizer, encs["attr1"]["examples"])
                     encs_attr2 = bert.encode(model, tokenizer, encs["attr2"]["examples"])
+                
+                elif model_name == ModelName.KOBERT.value:
+                    model, tokenizer = kobert.load_model(args.kobert_version)
+                    encs_targ1 = kobert.encode(model, tokenizer, encs["targ1"]["examples"])
+                    encs_targ2 = kobert.encode(model, tokenizer, encs["targ2"]["examples"])
+                    encs_attr1 = kobert.encode(model, tokenizer, encs["attr1"]["examples"])
+                    encs_attr2 = kobert.encode(model, tokenizer, encs["attr2"]["examples"])
+                
+                elif model_name == ModelName.KCELECTRA.value:
+                    model, tokenizer = kcelectra.load_model(args.kcelectra_version)
+                    encs_targ1 = kcelectra.encode(model, tokenizer, encs["targ1"]["examples"])
+                    encs_targ2 = kcelectra.encode(model, tokenizer, encs["targ2"]["examples"])
+                    encs_attr1 = kcelectra.encode(model, tokenizer, encs["attr1"]["examples"])
+                    encs_attr2 = kcelectra.encode(model, tokenizer, encs["attr2"]["examples"])
+                
+                elif model_name == ModelName.KORBERT.value:
+                    model, tokenizer = korbert.load_model(args.korbert_version)
+                    encs_targ1 = korbert.encode(model, tokenizer, encs["targ1"]["examples"])
+                    encs_targ2 = korbert.encode(model, tokenizer, encs["targ2"]["examples"])
+                    encs_attr1 = korbert.encode(model, tokenizer, encs["attr1"]["examples"])
+                    encs_attr2 = korbert.encode(model, tokenizer, encs["attr2"]["examples"])
 
                 elif model_name == ModelName.OPENAI.value:
                     load_encs_from = os.path.join(args.openai_encs, "%s.encs" % test)
@@ -368,6 +416,7 @@ def main(arguments):
                 encs["attr2"]["encs"] = encs_attr2
 
                 log.info("\tDone!")
+                
                 if not args.dont_cache_encs:
                     log.info("Saving encodings to %s", enc_file)
                     save_encodings(encs, enc_file)
