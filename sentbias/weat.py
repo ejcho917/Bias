@@ -196,9 +196,17 @@ def effect_size(X, Y, A, B, cossims):
     Y = list(Y)
     A = list(A)
     B = list(B)
+    
+    print('X:', X)
+    print('Y:', Y)
+    print('A:', A)
+    print('B:', B)
 
     numerator = mean_s_wAB(X, A, B, cossims=cossims) - mean_s_wAB(Y, A, B, cossims=cossims)
     denominator = stdev_s_wAB(X + Y, A, B, cossims=cossims)
+    
+    print('numerator:', numerator)
+    print('denominator:', denominator)
     return numerator / denominator
 
 
