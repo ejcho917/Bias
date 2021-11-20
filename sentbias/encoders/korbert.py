@@ -24,12 +24,19 @@ def encode(model, tokenizer, texts):
     encs = {}
     for text in texts:
         tokenized = tokenizer.tokenize(text)
+        print('tokenized:', tokenized)
         indexed = tokenizer.convert_tokens_to_ids(tokenized)
+        print('indexed:', indexed)
         segment_idxs = [0] * len(tokenized)
+        print('segment_idxs:', segment_idxs)
         tokens_tensor = torch.tensor([indexed])
+        print('tokens_tensor:', tokens_tensor)
         segments_tensor = torch.tensor([segment_idxs])
+        print('segments_tensor:', segments_tensor)
         enc, _ = model(tokens_tensor, segments_tensor)
+        print('enc:', enc)
         enc = enc[:, 0, :]  # extract the last rep of the first input
+        print('final enc:', enc)
         #print('enc:', enc)
         #print('enc.detach().view(-1).numpy():', enc.detach().view(-1).numpy())
         encs[text] = enc.detach().view(-1).numpy()
