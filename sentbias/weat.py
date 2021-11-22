@@ -46,11 +46,6 @@ def s_wAB(A, B, cossims):
     Return vector of s(w, A, B) across w, where
         s(w, A, B) = mean_{a in A} cos(w, a) - mean_{b in B} cos(w, b).
     """
-    print('cossims[:, A]:', cossims[:, A])
-    print('cossims[:, A].mean(axis=1):', cossims[:, A].mean(axis=1))
-    print('cossims[:, B]:', cossims[:, B])
-    print('cossims[:, B].mean(axis=1):', cossims[:, B].mean(axis=1))
-    
     return cossims[:, A].mean(axis=1) - cossims[:, B].mean(axis=1)
 
 
@@ -202,19 +197,9 @@ def effect_size(X, Y, A, B, cossims):
     A = list(A)
     B = list(B)
     
-    print('X:', X)
-    print('Y:', Y)
-    print('A:', A)
-    print('B:', B)
-    
-    print('mean_s_wAB(X, A, B, cossims=cossims):', mean_s_wAB(X, A, B, cossims=cossims))
-    print('mean_s_wAB(Y, A, B, cossims=cossims):', mean_s_wAB(Y, A, B, cossims=cossims))
-
     numerator = mean_s_wAB(X, A, B, cossims=cossims) - mean_s_wAB(Y, A, B, cossims=cossims)
     denominator = stdev_s_wAB(X + Y, A, B, cossims=cossims)
     
-    print('numerator:', numerator)
-    print('denominator:', denominator)
     return numerator / denominator
 
 
